@@ -1,0 +1,10 @@
+SELECT 
+
+  *
+  ,CASE 
+    WHEN Category = 'Como chegar' THEN REPLACE(Action,'Bloco - ','')
+    ELSE NULL 
+  END as Bloco
+  ,CAST(StorageDate as date) DateStorageDate 
+  ,EXTRACT(HOUR FROM StorageDate) HourStorageDate
+FROM `carna-belo.carna_belo_bot.EventTracks`

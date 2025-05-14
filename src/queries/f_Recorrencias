@@ -1,0 +1,40 @@
+WITH messages as (
+  SELECT 
+    *
+    ,CASE 
+      WHEN MessageOriginator = 'Bot' THEN ToIdentity 
+      ELSE FromIdentity 
+    END AS User
+  FROM `carna-belo.carna_belo_bot.Messages` 
+) 
+
+,messages_previous as (
+SELECT 
+  * 
+  ,lag(storagedate) over(partition by User,cast(StorageDate as date) ORDER BY MessageSequentialID asc) StorageDatePrevious
+  ,lag(MessageOriginator) over(partition by User,cast(StorageDate as date) ORDER BY MessageSequentialID asc) MessageOriginatorPrevious
+FROM messages ) 
+
+,dias_distintos_usuarios as (
+SELECT 
+  User
+  ,count(distinct cast(StorageDate as date)) quantidade_dias_recorrentes
+  
+FROM messages_previous
+GROUP BY 1
+
+) 
+
+
+SELECT 
+  CASE 
+     WHEN quantidade_dias_recorrentes = 1 THEN 'Apenas 1 acesso'
+    WHEN quantidade_dias_recorrentes >= 2  and  quantidade_dias_recorrentes < 4 THEN 'Entre 02 e 04 dias'
+    WHEN quantidade_dias_recorrentes >= 4  and  quantidade_dias_recorrentes < 6 THEN 'Entre 04 e 06 dias'
+    WHEN quantidade_dias_recorrentes >= 6  and  quantidade_dias_recorrentes < 8 THEN 'Entre 06 e 08 dias'
+    WHEN quantidade_dias_recorrentes >= 8  and  quantidade_dias_recorrentes < 10 THEN 'Entre 08 e 10 dias'
+  ELSE 'Maior que 10 dias'
+  END AS categoria_recorrencia
+  ,count(*) quantidade_usuarios
+FROM dias_distintos_usuarios 
+GROUP BY 1
